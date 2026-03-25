@@ -1,3 +1,6 @@
+core.*
+managed_alloc_runtime/
+
 *.png
 *.pyc
 */checkpoint_dir
