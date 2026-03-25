@@ -113,8 +113,8 @@ def _fp8_linear_create_weights(
     assert self.quant_config.activation_scheme == "dynamic"
     assert not self.use_marlin # not implement yet, because lack weight loader for chanelwise weight_scale
 
-    # TODO support ROCM
-    assert not current_platform.is_rocm()
+    # ROCm is now supported with custom FP8 quantization
+    # assert not current_platform.is_rocm()
     assert not current_platform.is_fp8_fnuz()
 
     # store essential config in layer for custom weight loader
@@ -181,9 +181,8 @@ def _fp8_moe_create_weights(self, layer: Module, num_experts: int, hidden_size: 
     assert self.quant_config.activation_scheme == "dynamic"
     assert self.quant_config.weight_block_size is not None
 
-    # TODO support ROCM
-    # https://github.com/vllm-project/vllm/blob/v0.8.4/vllm/model_executor/layers/quantization/fp8.py#L655
-    assert not current_platform.is_rocm()
+    # ROCm is now supported with custom FP8 quantization
+    # assert not current_platform.is_rocm()
     assert not current_platform.is_fp8_fnuz()
     assert current_platform.fp8_dtype() == torch.float8_e4m3fn
 
