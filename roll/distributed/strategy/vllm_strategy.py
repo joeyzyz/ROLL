@@ -50,8 +50,14 @@ class VllmStrategy(InferenceStrategy):
         vllm_config = copy.deepcopy(self.worker_config.strategy_args.strategy_config)
         # Must explicitly set VLLM_USE_V1 to pass this check: https://github.com/vllm-project/vllm/pull/14972
         os.environ["VLLM_USE_V1"] = str(vllm_config.pop("VLLM_USE_V1", 1))
-        self.sleep_level = vllm_config.pop("sleep_level", 1)
-
+        # On ROCm platforms, sleep/offload is not fully supported due to CuMemAllocator
+        # So we disable it by setting sleep_level to 0
+        from roll.platforms import current_platform
+        if current_platform.is_rocm():
+            self.sleep_level = 0
+        else:
+            self.sleep_level = vllm_config.pop("sleep_level", 1)
+        
         data_parallel_size = vllm_config.get("data_parallel_size", 1)
         if data_parallel_size > 1:
             logger.info(
@@ -325,10 +331,12 @@ class VllmStrategy(InferenceStrategy):
 
     async def offload_states(self, include=None, non_blocking=False):
         await self.model.reset_prefix_cache()
-        if include is None or OffloadStateType.model_params in include:
-            if self.is_model_in_gpu and self.worker.pipeline_config.is_actor_infer_colocated:
-                await self.model.offload_states(self.sleep_level)
-                self.is_model_in_gpu = False
+        # Skip offload if sleep_level is 0 (ROCm platform)
+        if self.sleep_level > 0:
+            if include is None or OffloadStateType.model_params in include:
+                if self.is_model_in_gpu and self.worker.pipeline_config.is_actor_infer_colocated:
+                    await self.model.offload_states(self.sleep_level)
+                    self.is_model_in_gpu = False
         gc.collect()
         current_platform.empty_cache()
     

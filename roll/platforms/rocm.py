@@ -37,10 +37,10 @@ class RocmPlatform(Platform):
             "VLLM_ALLOW_INSECURE_SERIALIZATION": "1",
             # These VLLM related enviroment variables are related to backend. maybe used afterwards.
             # "VLLM_USE_TRITON_FLASH_ATTN":"0",
-            "VLLM_ROCM_USE_AITER":"1",
-            "VLLM_ROCM_USE_AITER_MOE":"1",
+            # "VLLM_ROCM_USE_AITER":"1",
+            # "VLLM_ROCM_USE_AITER_MOE":"1",
             # "VLLM_ROCM_USE_AITER_ASMMOE":"1",
-            "VLLM_ROCM_USE_AITER_PAGED_ATTN":"1",
+            # "VLLM_ROCM_USE_AITER_PAGED_ATTN":"1",
             # "RAY_DEBUG": "legacy",
             "VLLM_USE_V1": "0",
             "TORCHINDUCTOR_COMPILE_THREADS": "2",
@@ -110,3 +110,8 @@ class RocmPlatform(Platform):
     def apply_ulysses_patch(cls) -> None:
         from roll.utils.context_parallel import apply_ulysses_patch
         return apply_ulysses_patch()
+
+    @classmethod
+    def device_memory_used(cls) -> int:
+        free, total = torch.cuda.mem_get_info()
+        return total - free

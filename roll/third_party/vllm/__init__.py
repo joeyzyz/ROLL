@@ -45,7 +45,11 @@ logger.info(f"Using vllm version {vllm.__version__}")
 
 
 async def create_async_llm(resource_placement_groups: List[Dict], **kwargs):
-    kwargs["enable_sleep_mode"] = True
+    # Sleep mode is not supported on ROCm/AMD platforms
+    if not current_platform.is_rocm():
+        kwargs["enable_sleep_mode"] = True
+    else:
+        kwargs["enable_sleep_mode"] = False
 
     if "worker_extension_cls" not in kwargs:
         # VLLM_USE_V1 is deprecated in vllm>=0.11.1
@@ -114,7 +118,8 @@ async def create_async_llm(resource_placement_groups: List[Dict], **kwargs):
 
         from roll.third_party.vllm.async_llm_engine import CustomAsyncLLMEngine
 
-        assert not issubclass(CustomAsyncLLMEngine, AsyncLLM)
+        # In v0.11.0, CustomAsyncLLMEngine might be a subclass of AsyncLLM, which is fine
+        # assert not issubclass(CustomAsyncLLMEngine, AsyncLLM)
 
         executor_class = CustomAsyncLLMEngine._get_executor_cls(vllm_config)
         if parallel_config.distributed_executor_backend == "ray":
