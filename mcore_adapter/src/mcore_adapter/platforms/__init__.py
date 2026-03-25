@@ -31,6 +31,11 @@ def _init_platform() -> Platform:
     except ImportError:
         pass
 
+    import os
+    if os.environ.get("ROCM_HOME") or os.environ.get("HIP_HOME") or os.environ.get("HIP_VISIBLE_DEVICES"):
+        logger.debug("Detected ROCm environment variables. Initializing ROCm platform.")
+        return RocmPlatform()
+
     if torch.cuda.is_available():
         device_name = torch.cuda.get_device_name().upper()
         logger.debug(f"Detected CUDA device: {device_name}")
