@@ -444,7 +444,7 @@ class MegatronWeightUpdater:
                 )
                 infer_parallel_tensors = [None] * infer_parallel_size if co_infer_rank == 0 else None
                 dist.gather_object(
-                    serialized_tensors, infer_parallel_tensors, group_dst=0, group=self._infer_parallel_cpu_group
+                    serialized_tensors, infer_parallel_tensors, dst=0, group=self._infer_parallel_cpu_group
                 )
 
             if refs:

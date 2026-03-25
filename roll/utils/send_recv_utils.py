@@ -188,7 +188,13 @@ def _rebuild_cuda_tensor_modified(*args):
 
 
 def _device_to_uuid(device: int) -> str:
-    return str(torch.cuda.get_device_properties(device).uuid)
+    # AMD GPUs don't have uuid attribute, use device index as fallback
+    props = torch.cuda.get_device_properties(device)
+    if hasattr(props, 'uuid'):
+        return str(props.uuid)
+    else:
+        # For AMD ROCm GPUs, use device index as identifier
+        return f"device_{device}"
 
 
 def _device_from_maybe_uuid(device_maybe_uuid) -> int:
@@ -196,6 +202,10 @@ def _device_from_maybe_uuid(device_maybe_uuid) -> int:
         return device_maybe_uuid
 
     if isinstance(device_maybe_uuid, str):
+        # Check if it's a device index (AMD platform fallback)
+        if device_maybe_uuid.startswith("device_"):
+            return int(device_maybe_uuid.split("_")[1])
+        # Try to match by uuid for NVIDIA GPUs
         for device in range(torch.cuda.device_count()):
             if str(torch.cuda.get_device_properties(device).uuid) == device_maybe_uuid:
                 return device
