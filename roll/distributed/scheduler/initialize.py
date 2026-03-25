@@ -36,12 +36,19 @@ def start_ray_cluster():
         logger.info("Ray cluster already initialized")
         return False
 
+    # Get GPU count for ray start command
+    import torch
+    num_gpus = torch.cuda.device_count() if torch.cuda.is_available() else 0
+    
+    # Add --num-gpus to ray start command for AMD ROCm platforms
+    gpu_arg = f" --num-gpus={num_gpus}" if num_gpus > 0 else ""
+
     if rank == 0:
-        cmd = f"ray start --head --port={master_port} --node-name={node_name} --dashboard-port={dashboard_port}"
+        cmd = f"ray start --head --port={master_port} --node-name={node_name} --dashboard-port={dashboard_port}{gpu_arg}"
     else:
         # fix: 处理大规模下可能会出现的head/worker node创建顺序不一致问题
         time.sleep(5)
-        cmd = f"ray start --address={master_addr}:{master_port} --node-name={node_name} --dashboard-port={dashboard_port}"
+        cmd = f"ray start --address={master_addr}:{master_port} --node-name={node_name} --dashboard-port={dashboard_port}{gpu_arg}"
 
     logger.info(f"Starting ray cluster: {cmd}")
     ret = subprocess.run(cmd, shell=True, capture_output=True)

@@ -25,6 +25,12 @@ def _init_platform() -> Platform:
     Returns:
         An instance of a subclass of Platform corresponding to the detected hardware.
     """
+    # Check for AMD ROCm first (before torch.cuda.is_available() since AMD GPUs may not show up as CUDA devices in some environments)
+    import os
+    if os.environ.get("ROCM_HOME") or os.environ.get("HIP_HOME") or os.environ.get("HIP_VISIBLE_DEVICES"):
+        logger.debug("Detected ROCm environment variables. Initializing ROCm platform.")
+        return RocmPlatform()
+    
     if torch.cuda.is_available():
         device_name = torch.cuda.get_device_name().upper()
         logger.debug(f"Detected CUDA device: {device_name}")

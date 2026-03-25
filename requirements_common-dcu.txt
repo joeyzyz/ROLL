@@ -37,7 +37,7 @@ gymnasium[toy-text]
 gym_sokoban
 
 # # for torch 280
-# gem-llm==0.0.4
+gem-llm==0.0.4
 mcp
 
 hydra-core
